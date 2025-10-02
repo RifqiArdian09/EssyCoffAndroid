@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+
+
+    <!-- Light Theme Colors: Sage + Beige + Brown -->
+    <color name="primary">#8BAA8E</color>        <!-- Sage Green Primary -->
+    <color name="primary_dark">#6F8F72</color>   <!-- Darker Sage for status/navigation -->
+    <color name="secondary">#8B5E3C</color>      <!-- Brown Secondary/Accent -->
+    <color name="background">#F5F0E6</color>     <!-- Soft Beige Background -->
+    <color name="surface">#FFFFFF</color>        <!-- Surface (cards) slightly brighter -->
+    <color name="text_primary">#2E2A25</color>   <!-- Deep Brown Text -->
+    <color name="text_secondary">#6B635B</color> <!-- Muted Brown Gray Text -->
+    <color name="text_hint">#9C938A</color>     <!-- Hint Text Color -->
+    <color name="divider">#E0D8CC</color>       <!-- Light Beige Divider -->
+    <color name="accent">#8B5E3C</color>        <!-- Brown Accent -->
+    <color name="error">#B00020</color>         <!-- Material Error -->
+    <color name="on_primary">#FFFFFF</color>    <!-- Text on primary color -->
+    <color name="on_surface">#2E2A25</color>    <!-- Text on surface -->
+</resources>

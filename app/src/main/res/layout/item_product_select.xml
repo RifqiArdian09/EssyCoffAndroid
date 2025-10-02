@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="120dp"
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="@color/surface"
+    app:cardPreventCornerOverlap="false"
+    app:cardUseCompatPadding="false"
+    app:strokeColor="@color/primary"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:padding="6dp"
+        android:paddingBottom="8dp">
+
+        <!-- Gambar Produk -->
+        <ImageView
+            android:id="@+id/imageViewProduct"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="0dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/placeholder_product" />
+
+        <!-- Nama Produk -->
+        <TextView
+            android:id="@+id/textViewProductName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="2"
+            android:gravity="center"
+            android:text="Nama Produk"
+            android:textAlignment="center"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            app:autoSizeMaxTextSize="11sp"
+            app:autoSizeMinTextSize="9sp"
+            app:autoSizeTextType="uniform" />
+
+        <!-- Harga -->
+        <TextView
+            android:id="@+id/textViewPrice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Rp 10.000"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:textSize="11sp"
+            app:autoSizeMaxTextSize="11sp"
+            app:autoSizeMinTextSize="9sp"
+            app:autoSizeTextType="uniform" />
+
+        <!-- Stok -->
+        <TextView
+            android:id="@+id/textViewStock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:text="Stok: 10"
+            android:textColor="@color/text_secondary"
+            android:textSize="9sp"
+            app:autoSizeMaxTextSize="9sp"
+            app:autoSizeMinTextSize="7sp"
+            app:autoSizeTextType="uniform" />
+
+        <!-- Tombol Tambah -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnAddToCart"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:layout_marginTop="6dp"
+            android:includeFontPadding="false"
+            android:minHeight="0dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:text="Tambah"
+            android:textAllCaps="false"
+            android:textColor="@color/on_primary"
+            android:textSize="10sp"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="10dp"
+            app:iconPadding="0dp" />
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

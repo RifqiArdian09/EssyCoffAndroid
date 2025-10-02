@@ -1,0 +1,42 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:background="@color/surface"
+    android:layout_margin="4dp">
+
+    <TextView
+        android:id="@+id/textViewProductName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="Es Kopi"
+        android:textColor="@color/text_primary" />
+
+    <TextView
+        android:id="@+id/textViewPrice"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Rp 15.000"
+        android:textColor="@color/text_secondary" />
+
+    <TextView
+        android:id="@+id/textViewQty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="x1"
+        android:textStyle="bold"
+        android:layout_marginHorizontal="8dp" />
+
+    <TextView
+        android:id="@+id/textViewSubtotal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rp 15.000"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary" />
+
+</LinearLayout>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night Theme Colors: Sage + Beige + Brown (dark variants) -->
+    <color name="primary">#6F8F72</color>        <!-- Darker Sage Green Primary -->
+    <color name="primary_dark">#5B765E</color>   <!-- Even Darker Sage for status/navigation -->
+    <color name="secondary">#8B5E3C</color>      <!-- Brown Secondary/Accent -->
+    <color name="background">#1B1F1B</color>     <!-- Very dark, greenish-brown background -->
+    <color name="surface">#242824</color>        <!-- Dark surface for cards -->
+    <color name="text_primary">#EDEAE6</color>   <!-- Light text -->
+    <color name="text_secondary">#BDB5AB</color> <!-- Muted light text -->
+    <color name="text_hint">#8E877D</color>     <!-- Hint text -->
+    <color name="divider">#343A34</color>       <!-- Subtle divider -->
+    <color name="accent">#8B5E3C</color>        <!-- Brown Accent -->
+    <color name="error">#CF6679</color>         <!-- Material error for dark -->
+    <color name="on_primary">#121512</color>    <!-- Text on primary (dark) -->
+    <color name="on_surface">#EDEAE6</color>    <!-- Text on surface -->
+</resources>
