@@ -35,7 +35,7 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
 
-    // 🔥 Tambahkan ini untuk fitur POS-mu
+    
     implementation libs.retrofit
     implementation libs.retrofit.converter.gson
     implementation libs.okhttp.logging.interceptor
@@ -46,6 +46,6 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-    // Glide annotation processor (penting!)
+    
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 }

@@ -25,10 +25,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Fragment awal: Produk
+        // Fragment awal: Transaksi
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.fragment_container, new ProductsFragment())
+                .replace(R.id.fragment_container, new TransactionsFragment())
                 .commit();
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
@@ -67,5 +67,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+        // Set menu default ke Transaksi agar tab sesuai dengan fragment awal
+        bottomNav.setSelectedItemId(R.id.nav_transactions);
     }
 }

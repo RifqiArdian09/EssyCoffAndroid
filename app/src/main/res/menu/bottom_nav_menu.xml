@@ -1,13 +1,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/nav_transactions"
+        android:icon="@drawable/ic_cart"
+        android:title="Transaksi" />
+
+    <item
         android:id="@+id/nav_products"
         android:icon="@drawable/ic_box"
         android:title="Produk" />
 
-    <item
-        android:id="@+id/nav_transactions"
-        android:icon="@drawable/ic_cart"
-        android:title="Transaksi" />
+
 
     <item
         android:id="@+id/nav_history"

@@ -329,6 +329,12 @@ public class TransactionsFragment extends Fragment implements
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder_id(orderId);
             orderItem.setProduct_id(cartItem.getProduct().getId());
+            // snapshot product name to preserve in history even if product gets deleted later
+            String snapName = cartItem.getProduct().getName();
+            if (snapName != null) {
+                snapName = snapName.replace(" (Nonaktif)", "").replace("(Nonaktif)", "").trim();
+            }
+            orderItem.setProduct_name(snapName);
             orderItem.setQty(cartItem.getQuantity());
             orderItem.setPrice(cartItem.getProduct().getPrice());
             orderItemsList.add(orderItem);

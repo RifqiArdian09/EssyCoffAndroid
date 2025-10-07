@@ -36,15 +36,17 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OrderItem item = orderItems.get(position);
 
-        // Cari nama produk dari daftar produk
-        String productName = "Produk Tidak Dikenal";
-        for (Product p : products) {
-            if (p.getId().equals(item.getProduct_id())) {
-                productName = p.getName();
-                break;
+        // Gunakan snapshot nama jika tersedia, jika tidak fallback cari dari daftar produk
+        String productName = item.getProduct_name();
+        if (productName == null || productName.isEmpty()) {
+            productName = "Produk Tidak Dikenal";
+            for (Product p : products) {
+                if (p.getId().equals(item.getProduct_id())) {
+                    productName = p.getName();
+                    break;
+                }
             }
         }
-
         // Tampilkan nama tanpa status nonaktif
         if (productName != null) {
             productName = productName.replace(" (Nonaktif)", "").replace("(Nonaktif)", "").trim();

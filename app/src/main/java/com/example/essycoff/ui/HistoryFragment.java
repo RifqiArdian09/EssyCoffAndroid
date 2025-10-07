@@ -20,9 +20,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.essycoff.adapter.OrderItemAdapter;
 import com.example.essycoff.api.ApiService;
 import com.example.essycoff.R;
-import com.example.essycoff.adapter.OrderItemAdapter;
 import com.example.essycoff.adapter.TransactionAdapter;
 import com.example.essycoff.api.RetrofitClient;
 import com.example.essycoff.model.Order;
@@ -30,6 +31,7 @@ import com.example.essycoff.model.OrderItem;
 import com.example.essycoff.model.Product;
 import com.example.essycoff.utils.AuthManager;
 import com.example.essycoff.utils.Constants;
+import com.example.essycoff.utils.ImageUrlHelper;
 import com.bumptech.glide.Glide;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.button.MaterialButton;
@@ -471,12 +473,17 @@ public class HistoryFragment extends Fragment {
                             if (textTopProductName != null) textTopProductName.setText("Produk terlaris: " + name);
                             if (textTopProductQty != null) textTopProductQty.setText("Terjual: " + topQty);
                             if (imageTopProduct != null) {
-                                Glide.with(requireContext())
-                                        .load(imageUrl)
-                                        .placeholder(R.drawable.placeholder_product)
-                                        .error(R.drawable.placeholder_product)
-                                        .circleCrop()
-                                        .into(imageTopProduct);
+                                String fixedUrl = ImageUrlHelper.fixSupabaseUrl(imageUrl);
+                                if (fixedUrl != null && !fixedUrl.isEmpty()) {
+                                    Glide.with(requireContext())
+                                            .load(fixedUrl)
+                                            .placeholder(R.drawable.placeholder_product)
+                                            .error(R.drawable.placeholder_product)
+                                            .circleCrop()
+                                            .into(imageTopProduct);
+                                } else {
+                                    imageTopProduct.setImageResource(R.drawable.placeholder_product);
+                                }
                             }
                         }
                         @Override

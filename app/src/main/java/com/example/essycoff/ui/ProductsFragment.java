@@ -145,9 +145,9 @@ public class ProductsFragment extends Fragment {
         if (!isFragmentAlive()) return;
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("Konfirmasi Nonaktifkan")
-                .setMessage("Apakah Anda yakin ingin menonaktifkan produk \"" + product.getName() + "\"?\n\nProduk akan disembunyikan dari daftar, namun tetap terlihat di riwayat transaksi.")
-                .setPositiveButton("Ya, Nonaktifkan", (dialogInterface, i) -> {
+                .setTitle("Konfirmasi Hapus Produk")
+                .setMessage("Apakah Anda yakin ingin menghapus produk \"" + product.getName() + "\"")
+                .setPositiveButton("Ya, Hapus", (dialogInterface, i) -> {
                     deleteProduct(product);
                 })
                 .setNegativeButton("Batal", null)
@@ -390,12 +390,54 @@ public class ProductsFragment extends Fragment {
     }
 
     private void deleteProduct(Product product) {
-        Log.d("ProductsFragment", "Soft deleting (deactivating) product: " + product.getName() + " | ID: " + product.getId());
+        Log.d("ProductsFragment", "Hard deleting product: " + product.getName() + " | ID: " + product.getId());
 
-        // Soft delete: set stock to 0 and update name to indicate it's inactive
+        Call<ResponseBody> call = apiService.deleteProduct(
+                "eq." + product.getId(),
+                Constants.SUPABASE_ANON_KEY,
+                token
+        );
+
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Log.d("ProductsFragment", "Product deleted successfully");
+                    loadProducts(); // Refresh list
+                    showSafeToast("Produk berhasil dihapus");
+                } else {
+                    String errorMsg = "Gagal hapus produk";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorMsg = response.errorBody().string();
+                        }
+                        Log.e("ProductsFragment", "Delete product failed: " + errorMsg + " Code: " + response.code());
+                    } catch (IOException e) {
+                        Log.e("ProductsFragment", "Failed to read error body", e);
+                    }
+                    // Jika gagal karena FK (produk masih direferensikan), fallback: nonaktifkan
+                    if (response.code() == 409 && errorMsg != null && errorMsg.contains("violates foreign key constraint")) {
+                        showSafeLongToast("Produk digunakan di transaksi. Mengubah menjadi Nonaktif agar tidak muncul di daftar.");
+                        softDeactivateProduct(product);
+                    } else {
+                        showSafeLongToast(errorMsg + " (" + response.code() + ")");
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("ProductsFragment", "Delete product request failed", t);
+                showSafeLongToast("Error: " + t.getMessage());
+            }
+        });
+    }
+
+    // Fallback: Nonaktifkan produk (soft delete) jika hard delete ditolak oleh FK
+    private void softDeactivateProduct(Product product) {
         Product updatedProduct = new Product();
         updatedProduct.setStock(0);
-        updatedProduct.setName(product.getName() + " (Nonaktif)");
+        updatedProduct.setName(product.getName().contains("(Nonaktif)") ? product.getName() : product.getName() + " (Nonaktif)");
 
         Call<List<Product>> call = apiService.updateProduct(
                 "eq." + product.getId(),
@@ -407,27 +449,20 @@ public class ProductsFragment extends Fragment {
         call.enqueue(new Callback<List<Product>>() {
             @Override
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
-                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                    Log.d("ProductsFragment", "Product deactivated successfully");
-                    loadProducts(); // Refresh
-                    showSafeToast("Produk berhasil dinonaktifkan");
+                if (response.isSuccessful()) {
+                    loadProducts();
+                    showSafeToast("Produk dinonaktifkan");
                 } else {
                     String errorMsg = "Gagal nonaktifkan produk";
                     try {
-                        if (response.errorBody() != null) {
-                            errorMsg = response.errorBody().string();
-                        }
-                        Log.e("ProductsFragment", "Deactivate product failed: " + errorMsg + " Code: " + response.code());
-                    } catch (IOException e) {
-                        Log.e("ProductsFragment", "Failed to read error body", e);
-                    }
+                        if (response.errorBody() != null) errorMsg = response.errorBody().string();
+                    } catch (IOException ignored) {}
                     showSafeLongToast(errorMsg + " (" + response.code() + ")");
                 }
             }
 
             @Override
             public void onFailure(Call<List<Product>> call, Throwable t) {
-                Log.e("ProductsFragment", "Deactivate product request failed", t);
                 showSafeLongToast("Error: " + t.getMessage());
             }
         });

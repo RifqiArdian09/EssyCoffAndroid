@@ -1,4 +1,3 @@
-// ProductSelectAdapter.java
 package com.example.essycoff.adapter;
 
 import android.content.Context;
@@ -7,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -18,12 +16,11 @@ import com.example.essycoff.R;
 import com.example.essycoff.model.CartItem;
 import com.example.essycoff.model.Product;
 import com.example.essycoff.ui.TransactionsFragment;
+import com.example.essycoff.utils.ImageUrlHelper;
 
 import java.util.List;
 
 public class ProductSelectAdapter extends RecyclerView.Adapter<ProductSelectAdapter.ViewHolder> {
-
-    private List<Product> productList;
     private Context context;
     private OnAddToCartListener listener;
 
@@ -51,12 +48,17 @@ public class ProductSelectAdapter extends RecyclerView.Adapter<ProductSelectAdap
         holder.textViewPrice.setText("Rp " + String.format("%,.0f", product.getPrice()));
         holder.textViewStock.setText("Stok: " + product.getStock());
 
-        Glide.with(context)
-                .load(product.getImage_url())
-                .placeholder(R.drawable.placeholder_product)
-                .error(R.drawable.placeholder_product)
-                .circleCrop()
-                .into(holder.imageViewProduct);
+        String imageUrl = ImageUrlHelper.fixSupabaseUrl(product.getImage_url());
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            Glide.with(context)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder_product)
+                    .error(R.drawable.placeholder_product)
+                    .circleCrop()
+                    .into(holder.imageViewProduct);
+        } else {
+            holder.imageViewProduct.setImageResource(R.drawable.placeholder_product);
+        }
 
         // Hapus listener ganda
         holder.btnAddToCart.setOnClickListener(v -> {

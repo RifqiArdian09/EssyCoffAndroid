@@ -110,6 +110,7 @@
                         android:layout_height="36dp"
                         android:layout_marginEnd="8dp"
                         android:text="Pilih Rentang"
+                        android:textColor="@color/text_primary"
                         android:textAllCaps="false"
                         android:textSize="12sp"
                         app:cornerRadius="18dp"
@@ -125,6 +126,7 @@
                         android:layout_height="36dp"
                         android:text="Reset"
                         android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
                         android:textSize="12sp"
                         app:cornerRadius="18dp" />
 
