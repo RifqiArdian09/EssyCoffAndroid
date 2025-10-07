@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +30,8 @@ import com.example.essycoff.api.RetrofitClient;
 import com.example.essycoff.model.Product;
 import com.example.essycoff.utils.AuthManager;
 import com.example.essycoff.utils.Constants;
+import com.example.essycoff.utils.ImageUrlHelper;
+import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,8 +51,10 @@ public class ProductsFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
     private List<Product> productList = new ArrayList<>();
+    private List<Product> fullProductList = new ArrayList<>();
     private ApiService apiService;
     private String token;
+    private TextInputEditText editTextProductSearch;
 
     private static final int PICK_IMAGE_REQUEST = 1;
     private Uri selectedImageUri;
@@ -86,13 +92,32 @@ public class ProductsFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        apiService = RetrofitClient.getClient().create(ApiService.class);
+        // Bind search input
+        editTextProductSearch = view.findViewById(R.id.editTextProductSearch);
+
+        apiService = RetrofitClient.getClient(requireContext()).create(ApiService.class);
         token = "Bearer " + AuthManager.getInstance(requireContext()).getToken();
+
+        if ("Bearer null".equals(token)) {
+            showSafeToast("Sesi berakhir. Silakan login ulang.");
+            return view;
+        }
 
         loadProducts();
 
         // FAB Tambah Produk
         view.findViewById(R.id.fabAddProduct).setOnClickListener(v -> showAddProductDialog());
+
+        // Search text change listener
+        if (editTextProductSearch != null) {
+            editTextProductSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override public void afterTextChanged(Editable s) {
+                    applyProductFilter(s != null ? s.toString() : "");
+                }
+            });
+        }
 
         return view;
     }
@@ -184,8 +209,10 @@ public class ProductsFragment extends Fragment {
 
             // Load existing image
             if (currentEditingProduct.getImage_url() != null && !currentEditingProduct.getImage_url().isEmpty()) {
+                String imageUrl = ImageUrlHelper.fixSupabaseUrl(currentEditingProduct.getImage_url());
+                
                 com.bumptech.glide.Glide.with(this)
-                        .load(currentEditingProduct.getImage_url())
+                        .load(imageUrl)
                         .placeholder(R.drawable.placeholder_product)
                         .into(imageView);
             }
@@ -265,7 +292,7 @@ public class ProductsFragment extends Fragment {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    String imageUrl = Constants.SUPABASE_URL + "storage/v1/object/public/product-images/" + fileName;
+                    String imageUrl = Constants.SUPABASE_URL + "/storage/v1/object/public/product-images/" + fileName;
                     Log.d("Upload", "Upload successful. Image URL: " + imageUrl);
                     updateProductInDB(name, price, stock, imageUrl);
                 } else {
@@ -288,6 +315,20 @@ public class ProductsFragment extends Fragment {
                 showSafeLongToast("Error upload: " + t.getMessage());
             }
         });
+    }
+
+    private void applyProductFilter(String query) {
+        String q = query == null ? "" : query.trim().toLowerCase();
+        List<Product> filtered = new ArrayList<>();
+        if (q.isEmpty()) {
+            filtered.addAll(fullProductList);
+        } else {
+            for (Product p : fullProductList) {
+                String name = p.getName() != null ? p.getName().toLowerCase() : "";
+                if (name.contains(q)) filtered.add(p);
+            }
+        }
+        adapter.setItems(filtered);
     }
 
     private void updateProductInDB(String name, double price, int stock, String imageUrl) {
@@ -454,7 +495,7 @@ public class ProductsFragment extends Fragment {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    String imageUrl = Constants.SUPABASE_URL + "storage/v1/object/public/product-images/" + fileName;
+                    String imageUrl = Constants.SUPABASE_URL + "/storage/v1/object/public/product-images/" + fileName;
                     Log.d("Upload", "Upload successful. Image URL: " + imageUrl);
                     saveProductToDB(name, price, stock, imageUrl);
                 } else {
@@ -528,15 +569,15 @@ public class ProductsFragment extends Fragment {
             @Override
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    productList.clear();
-                    // Filter: only show active products (stock > 0)
+                    fullProductList.clear();
+                    // Only active products (stock > 0)
                     for (Product product : response.body()) {
-                        if (product.getStock() > 0) {
-                            productList.add(product);
-                        }
+                        if (product.getStock() > 0) fullProductList.add(product);
                     }
-                    adapter.notifyDataSetChanged();
-                    Log.d("ProductsFragment", "Loaded " + productList.size() + " active products (filtered from " + response.body().size() + " total)");
+                    // Apply current query if any
+                    String q = editTextProductSearch != null && editTextProductSearch.getText() != null ? editTextProductSearch.getText().toString() : "";
+                    applyProductFilter(q);
+                    Log.d("ProductsFragment", "Loaded " + fullProductList.size() + " active products (filtered from " + response.body().size() + " total)");
                 } else {
                     String errorMsg = "Failed to load products";
                     try {

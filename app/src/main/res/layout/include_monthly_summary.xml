@@ -31,7 +31,7 @@
                 android:background="@android:color/transparent"
                 android:contentDescription="Bulan sebelumnya"
                 android:src="@drawable/ic_arrow_left"
-                android:tint="@color/text_secondary" />
+                app:tint="@color/text_secondary" />
 
             <TextView
                 android:id="@+id/tvSelectedMonth"
@@ -51,7 +51,7 @@
                 android:background="@android:color/transparent"
                 android:contentDescription="Bulan berikutnya"
                 android:src="@drawable/ic_arrow_right"
-                android:tint="@color/text_secondary" />
+                app:tint="@color/text_secondary" />
 
         </LinearLayout>
 

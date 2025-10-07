@@ -85,7 +85,7 @@ public class TransactionsFragment extends Fragment implements
     }
 
     private void initData() {
-        apiService = RetrofitClient.getClient().create(ApiService.class);
+        apiService = RetrofitClient.getClient(requireContext()).create(ApiService.class);
 
         String rawToken = AuthManager.getInstance(requireContext()).getToken();
         token = "Bearer " + rawToken;

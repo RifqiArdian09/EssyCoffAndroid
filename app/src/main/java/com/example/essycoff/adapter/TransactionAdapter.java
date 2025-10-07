@@ -82,6 +82,12 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         }
     }
 
+    // ✅ Ganti seluruh data adapter (mendukung filter & perubahan rentang tanggal)
+    public void setItems(List<Order> newItems) {
+        this.orderList = newItems;
+        notifyDataSetChanged();
+    }
+
     // ✅ ViewHolder dengan tombol delete
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textViewOrderNumber, textViewCustomerName, textViewTotal, textViewDate;

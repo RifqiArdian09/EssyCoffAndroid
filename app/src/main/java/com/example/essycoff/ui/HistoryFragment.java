@@ -12,6 +12,8 @@ import android.widget.Toast;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.text.Editable;
+import android.text.TextWatcher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,6 +31,12 @@ import com.example.essycoff.model.Product;
 import com.example.essycoff.utils.AuthManager;
 import com.example.essycoff.utils.Constants;
 import com.bumptech.glide.Glide;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
+import androidx.core.util.Pair;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -51,6 +59,7 @@ public class HistoryFragment extends Fragment {
     private RecyclerView recyclerView;
     private TransactionAdapter adapter;
     private List<Order> orderList = new ArrayList<>();
+    private List<Order> fullOrderList = new ArrayList<>();
     private ApiService apiService;
     private String token;
     private String userUuid;
@@ -67,6 +76,15 @@ public class HistoryFragment extends Fragment {
     // Selected month (0-based) and year
     private int selectedYear;
     private int selectedMonth;
+
+    // Search + quick filters
+    private TextInputEditText editTextSearch;
+    private ChipGroup chipGroupDateFilter;
+    private Chip chipToday;
+    private Chip chipThisWeek;
+    private Chip chipThisMonth;
+    private MaterialButton btnFilterCustomRange;
+    private MaterialButton btnResetFilters;
 
     @Nullable
     @Override
@@ -85,7 +103,7 @@ public class HistoryFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // Init API & auth
-        apiService = RetrofitClient.getClient().create(ApiService.class);
+        apiService = RetrofitClient.getClient(requireContext()).create(ApiService.class);
         token = "Bearer " + AuthManager.getInstance(requireContext()).getToken();
         userUuid = AuthManager.getInstance(requireContext()).getUserId();
         if (userUuid == null || token.equals("Bearer null")) {
@@ -103,6 +121,15 @@ public class HistoryFragment extends Fragment {
         imageTopProduct = view.findViewById(R.id.imageTopProduct);
         textTopProductName = view.findViewById(R.id.textTopProductName);
         textTopProductQty = view.findViewById(R.id.textTopProductQty);
+
+        // Bind search + quick filter views
+        editTextSearch = view.findViewById(R.id.editTextSearch);
+        chipGroupDateFilter = view.findViewById(R.id.chipGroupDateFilter);
+        chipToday = view.findViewById(R.id.chipToday);
+        chipThisWeek = view.findViewById(R.id.chipThisWeek);
+        chipThisMonth = view.findViewById(R.id.chipThisMonth);
+        btnFilterCustomRange = view.findViewById(R.id.btnFilterCustomRange);
+        btnResetFilters = view.findViewById(R.id.btnResetFilters);
 
         Calendar cal = Calendar.getInstance();
         selectedYear = cal.get(Calendar.YEAR);
@@ -137,6 +164,67 @@ public class HistoryFragment extends Fragment {
             cardMonthlySummary.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
         }
 
+        // Search filter
+        if (editTextSearch != null) {
+            editTextSearch.addTextChangedListener(new TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override public void afterTextChanged(Editable s) {
+                    List<Order> shown = applyTextFilter(s != null ? s.toString() : "");
+                    updateSummary(shown);
+                }
+            });
+        }
+
+        // Quick date filters using ChipGroup
+        if (chipGroupDateFilter != null) {
+            chipGroupDateFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
+                if (checkedIds.isEmpty()) {
+                    // No chip selected, show monthly view
+                    updateMonthLabel();
+                    loadHistoryForMonth(selectedYear, selectedMonth);
+                    return;
+                }
+                
+                int checkedId = checkedIds.get(0);
+                if (checkedId == R.id.chipToday) {
+                    String[] range = getTodayStartEndIsoUtc();
+                    loadHistoryForRange(range[0], range[1]);
+                } else if (checkedId == R.id.chipThisWeek) {
+                    String[] range = getThisWeekStartEndIsoUtc();
+                    loadHistoryForRange(range[0], range[1]);
+                } else if (checkedId == R.id.chipThisMonth) {
+                    String[] range = getThisMonthStartEndIsoUtc();
+                    loadHistoryForRange(range[0], range[1]);
+                }
+            });
+        }
+        
+        if (btnResetFilters != null) btnResetFilters.setOnClickListener(v -> {
+            if (editTextSearch != null) editTextSearch.setText("");
+            if (chipGroupDateFilter != null) chipGroupDateFilter.clearCheck();
+            updateMonthLabel();
+            loadHistoryForMonth(selectedYear, selectedMonth);
+        });
+
+        // Custom range via MaterialDatePicker
+        View btnCustom = view.findViewById(R.id.btnFilterCustomRange);
+        if (btnCustom != null) {
+            btnCustom.setOnClickListener(v -> {
+                MaterialDatePicker<Pair<Long, Long>> picker = MaterialDatePicker.Builder.dateRangePicker()
+                        .setTitleText("Pilih rentang tanggal")
+                        .build();
+                picker.addOnPositiveButtonClickListener(selection -> {
+                    if (selection != null && selection.first != null && selection.second != null) {
+                        // Inclusive end -> make exclusive by adding 1 day
+                        String[] range = getIsoUtcFromMillis(selection.first, selection.second + 24L*60*60*1000);
+                        loadHistoryForRange(range[0], range[1]);
+                    }
+                });
+                picker.show(getParentFragmentManager(), "date_range_picker");
+            });
+        }
+
         return view;
     }
 
@@ -156,10 +244,10 @@ public class HistoryFragment extends Fragment {
             @Override
             public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    orderList.clear();
-                    orderList.addAll(response.body());
-                    adapter.notifyDataSetChanged();
-                    updateSummary(orderList);
+                    fullOrderList.clear();
+                    fullOrderList.addAll(response.body());
+                    List<Order> shown = applyTextFilter(editTextSearch != null && editTextSearch.getText() != null ? editTextSearch.getText().toString() : "");
+                    updateSummary(shown);
                 } else {
                     String errorMsg = "Gagal muat riwayat";
                     try { if (response.errorBody() != null) errorMsg = response.errorBody().string(); }
@@ -170,6 +258,39 @@ public class HistoryFragment extends Fragment {
 
             @Override
             public void onFailure(Call<List<Order>> call, Throwable t) {
+                Toast.makeText(getContext(), "Koneksi gagal: " + t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void loadHistoryForRange(String isoStartInclusive, String isoEndExclusive) {
+        String andClause = String.format(Locale.US,
+                "(created_at.gte.%s,created_at.lt.%s)", isoStartInclusive, isoEndExclusive);
+        Call<List<Order>> call = apiService.getOrders(
+                Constants.SUPABASE_ANON_KEY,
+                token,
+                "eq." + userUuid,
+                "created_at.desc",
+                andClause
+        );
+
+        call.enqueue(new Callback<List<Order>>() {
+            @Override
+            public void onResponse(Call<List<Order>> call, Response<List<Order>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    fullOrderList.clear();
+                    fullOrderList.addAll(response.body());
+                    List<Order> shown = applyTextFilter(editTextSearch != null && editTextSearch.getText() != null ? editTextSearch.getText().toString() : "");
+                    updateSummary(shown);
+                } else {
+                    Toast.makeText(getContext(), "Gagal muat riwayat", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<Order>> call, Throwable t) {
+                if (!isAdded()) return;
                 Toast.makeText(getContext(), "Koneksi gagal: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
@@ -211,6 +332,71 @@ public class HistoryFragment extends Fragment {
         SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         iso.setTimeZone(TimeZone.getTimeZone("UTC"));
         return new String[]{iso.format(start.getTime()), iso.format(end.getTime())};
+    }
+
+    private String[] getTodayStartEndIsoUtc() {
+        Calendar local = Calendar.getInstance();
+        local.set(Calendar.HOUR_OF_DAY, 0);
+        local.set(Calendar.MINUTE, 0);
+        local.set(Calendar.SECOND, 0);
+        local.set(Calendar.MILLISECOND, 0);
+        long startLocal = local.getTimeInMillis();
+        long endLocal = startLocal + 24L*60*60*1000;
+        return getIsoUtcFromMillis(startLocal, endLocal);
+    }
+
+    private String[] getThisWeekStartEndIsoUtc() {
+        Calendar local = Calendar.getInstance();
+        local.setFirstDayOfWeek(Calendar.MONDAY);
+        local.set(Calendar.DAY_OF_WEEK, local.getFirstDayOfWeek());
+        local.set(Calendar.HOUR_OF_DAY, 0);
+        local.set(Calendar.MINUTE, 0);
+        local.set(Calendar.SECOND, 0);
+        local.set(Calendar.MILLISECOND, 0);
+        long startLocal = local.getTimeInMillis();
+        local.add(Calendar.WEEK_OF_YEAR, 1);
+        long endLocal = local.getTimeInMillis();
+        return getIsoUtcFromMillis(startLocal, endLocal);
+    }
+
+    private String[] getThisMonthStartEndIsoUtc() {
+        Calendar local = Calendar.getInstance();
+        local.set(Calendar.DAY_OF_MONTH, 1);
+        local.set(Calendar.HOUR_OF_DAY, 0);
+        local.set(Calendar.MINUTE, 0);
+        local.set(Calendar.SECOND, 0);
+        local.set(Calendar.MILLISECOND, 0);
+        long startLocal = local.getTimeInMillis();
+        local.add(Calendar.MONTH, 1);
+        long endLocal = local.getTimeInMillis();
+        return getIsoUtcFromMillis(startLocal, endLocal);
+    }
+
+    private String[] getIsoUtcFromMillis(long startMillisLocal, long endMillisLocal) {
+        Calendar startUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        startUtc.setTimeInMillis(startMillisLocal);
+        Calendar endUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+        endUtc.setTimeInMillis(endMillisLocal);
+        SimpleDateFormat iso = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        iso.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return new String[]{iso.format(startUtc.getTime()), iso.format(endUtc.getTime())};
+    }
+
+    private List<Order> applyTextFilter(String query) {
+        String q = query == null ? "" : query.trim().toLowerCase(Locale.getDefault());
+        List<Order> filtered;
+        if (q.isEmpty()) {
+            filtered = new ArrayList<>(fullOrderList);
+        } else {
+            filtered = new ArrayList<>();
+            for (Order o : fullOrderList) {
+                String num = o.getOrder_number() != null ? o.getOrder_number().toLowerCase(Locale.getDefault()) : "";
+                String cust = o.getCustomer_name() != null ? o.getCustomer_name().toLowerCase(Locale.getDefault()) : "";
+                if (num.contains(q) || cust.contains(q)) filtered.add(o);
+            }
+        }
+        adapter.setItems(filtered);
+        return filtered;
     }
 
     private void updateSummary(List<Order> orders) {

@@ -27,6 +27,11 @@ public interface ApiService {
     @POST("auth/v1/token?grant_type=password")
     Call<LoginResponse> login(@Body LoginRequest body, @Header("apikey") String apiKey);
 
+    // 🔐 Auth: Refresh Token
+    @Headers("Content-Type: application/json")
+    @POST("auth/v1/token?grant_type=refresh_token")
+    Call<LoginResponse> refresh(@Body RefreshRequest body, @Header("apikey") String apiKey);
+
     // 🛒 Products - CRUD operations
     @GET("rest/v1/products")
     Call<List<Product>> getProducts(
@@ -165,6 +170,15 @@ public interface ApiService {
         public LoginRequest(String email, String password) {
             this.email = email;
             this.password = password;
+        }
+    }
+
+    // Refresh Request Class
+    class RefreshRequest {
+        public String refresh_token;
+
+        public RefreshRequest(String refreshToken) {
+            this.refresh_token = refreshToken;
         }
     }
 }

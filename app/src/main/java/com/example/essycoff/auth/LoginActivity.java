@@ -61,7 +61,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        ApiService api = RetrofitClient.getClient().create(ApiService.class);
+        ApiService api = RetrofitClient.getClient(this).create(ApiService.class);
         ApiService.LoginRequest request = new ApiService.LoginRequest(email, password);
 
         progressBar.setVisibility(View.VISIBLE);
@@ -76,11 +76,15 @@ public class LoginActivity extends AppCompatActivity {
 
                 if (response.isSuccessful() && response.body() != null) {
                     String token = response.body().getAccessToken();
+                    String refresh = response.body().getRefreshToken();
                     if (response.body().getUser() != null) {
                         String email = response.body().getUser().getEmail();
                         authManager.saveEmail(email);
                     }
                     authManager.saveToken(token);
+                    if (refresh != null && !refresh.isEmpty()) {
+                        authManager.saveRefreshToken(refresh);
+                    }
 
                     startActivity(new Intent(LoginActivity.this, MainActivity.class));
                     finish();

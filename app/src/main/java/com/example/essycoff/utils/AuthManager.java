@@ -28,10 +28,14 @@ public class AuthManager {
         prefs.edit().putString(Constants.KEY_TOKEN, token).apply();
     }
 
+    public void saveRefreshToken(String refreshToken) {
+        prefs.edit().putString(Constants.KEY_REFRESH_TOKEN, refreshToken).apply();
+    }
+
     public void saveEmail(String email) {
         prefs.edit().putString(Constants.KEY_EMAIL, email).apply();
 
-        // ✅ ADD: Generate and save UUID when email is saved
+        // ADD: Generate and save UUID when email is saved
         if (email != null && !email.isEmpty()) {
             String userUuid = UUID.nameUUIDFromBytes(email.getBytes()).toString();
             saveUserUuid(userUuid);
@@ -43,11 +47,15 @@ public class AuthManager {
         return prefs.getString(Constants.KEY_TOKEN, null);
     }
 
+    public String getRefreshToken() {
+        return prefs.getString(Constants.KEY_REFRESH_TOKEN, null);
+    }
+
     public String getEmail() {
         return prefs.getString(Constants.KEY_EMAIL, null);
     }
 
-    // ✅ ADD: Methods to handle user UUID
+    // ADD: Methods to handle user UUID
     public void saveUserUuid(String userUuid) {
         prefs.edit().putString(Constants.KEY_USER_UUID, userUuid).apply();
     }
@@ -55,7 +63,7 @@ public class AuthManager {
     public String getUserId() {
         String uuid = prefs.getString(Constants.KEY_USER_UUID, null);
 
-        // ✅ Fallback: If UUID doesn't exist but email does, generate it
+        // Fallback: If UUID doesn't exist but email does, generate it
         if (uuid == null || uuid.isEmpty()) {
             String email = getEmail();
             if (email != null && !email.isEmpty()) {
