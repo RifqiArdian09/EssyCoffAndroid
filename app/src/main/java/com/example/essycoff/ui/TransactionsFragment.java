@@ -154,6 +154,13 @@ public class TransactionsFragment extends Fragment implements
         });
     }
 
+    // Public method to refresh data when the tab becomes visible
+    public void refresh() {
+        if (apiService != null) {
+            loadProducts();
+        }
+    }
+
     @Override
     public void onAddToCart(Product product) {
         CartItem existingItem = findCartItemByProductId(product.getId());

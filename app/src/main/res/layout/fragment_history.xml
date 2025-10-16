@@ -130,6 +130,17 @@
                         android:textSize="12sp"
                         app:cornerRadius="18dp" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnExport"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:layout_marginStart="8dp"
+                        android:text="Export"
+                        android:textAllCaps="false"
+                        android:textSize="12sp"
+                        app:cornerRadius="18dp" />
+
                 </LinearLayout>
 
             </LinearLayout>

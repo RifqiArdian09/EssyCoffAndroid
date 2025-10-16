@@ -42,10 +42,14 @@ dependencies {
     implementation libs.glide
     implementation libs.gson
 
-    testImplementation libs.junit
+    // XLSX writer (lightweight)
+    implementation 'org.dhatim:fastexcel:0.19.0'
+
+    // ViewPager2 for swipe navigation
+    implementation 'androidx.viewpager2:viewpager2:1.1.0'
+
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-    
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 }

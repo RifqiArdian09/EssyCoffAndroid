@@ -317,6 +317,13 @@ public class ProductsFragment extends Fragment {
         });
     }
 
+    // Public method to refresh data when the tab becomes visible
+    public void refresh() {
+        if (apiService != null) {
+            loadProducts();
+        }
+    }
+
     private void applyProductFilter(String query) {
         String q = query == null ? "" : query.trim().toLowerCase();
         List<Product> filtered = new ArrayList<>();

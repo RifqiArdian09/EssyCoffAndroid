@@ -14,12 +14,18 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.content.ContentValues;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+// no activity result launchers needed for XLSX export
 
 import com.example.essycoff.adapter.OrderItemAdapter;
 import com.example.essycoff.api.ApiService;
@@ -48,11 +54,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import java.io.OutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import org.dhatim.fastexcel.Workbook;
+import org.dhatim.fastexcel.Worksheet;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import androidx.core.content.ContextCompat;
 
 public class HistoryFragment extends Fragment {
 
@@ -62,6 +78,7 @@ public class HistoryFragment extends Fragment {
     private TransactionAdapter adapter;
     private List<Order> orderList = new ArrayList<>();
     private List<Order> fullOrderList = new ArrayList<>();
+    private List<Order> lastShownList = new ArrayList<>();
     private ApiService apiService;
     private String token;
     private String userUuid;
@@ -87,6 +104,9 @@ public class HistoryFragment extends Fragment {
     private Chip chipThisMonth;
     private MaterialButton btnFilterCustomRange;
     private MaterialButton btnResetFilters;
+    private MaterialButton btnExport;
+
+    // No onCreate override needed for XLSX export
 
     @Nullable
     @Override
@@ -132,6 +152,7 @@ public class HistoryFragment extends Fragment {
         chipThisMonth = view.findViewById(R.id.chipThisMonth);
         btnFilterCustomRange = view.findViewById(R.id.btnFilterCustomRange);
         btnResetFilters = view.findViewById(R.id.btnResetFilters);
+        btnExport = view.findViewById(R.id.btnExport);
 
         Calendar cal = Calendar.getInstance();
         selectedYear = cal.get(Calendar.YEAR);
@@ -144,6 +165,9 @@ public class HistoryFragment extends Fragment {
         // Buttons: prev/next month
         if (btnPrevMonth != null) btnPrevMonth.setOnClickListener(v -> changeMonth(-1));
         if (btnNextMonth != null) btnNextMonth.setOnClickListener(v -> changeMonth(+1));
+
+        // Export XLSX langsung ke Downloads
+        if (btnExport != null) btnExport.setOnClickListener(v -> exportXlsx());
 
         // Swipe on card to navigate months
         if (cardMonthlySummary != null) {
@@ -265,6 +289,87 @@ public class HistoryFragment extends Fragment {
         });
     }
 
+    // XLSX export helpers
+    private void exportXlsx() {
+        if (lastShownList == null || lastShownList.isEmpty()) {
+            Toast.makeText(getContext(), "Tidak ada data untuk diexport", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1001);
+                Toast.makeText(getContext(), "Izin penyimpanan diperlukan untuk menyimpan ke Downloads", Toast.LENGTH_LONG).show();
+                return;
+            }
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmm", Locale.getDefault());
+        String fileName = "riwayat-" + sdf.format(Calendar.getInstance().getTime()) + ".xlsx";
+        String mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        // Hitung ringkasan
+        int totalTx = lastShownList.size();
+        double totalRevenue = 0;
+        for (Order o : lastShownList) totalRevenue += o.getSubtotal();
+        try (OutputStream os = openDownloadOutputStream(fileName, mime)) {
+            if (os == null) {
+                Toast.makeText(getContext(), "Gagal membuat file di Downloads", Toast.LENGTH_LONG).show();
+                return;
+            }
+            Workbook wb = new Workbook(os, "EssyCoff", "1.0");
+            Worksheet ws = wb.newWorksheet("Riwayat");
+            // Header
+            ws.value(0, 0, "Nomor Transaksi");
+            ws.value(0, 1, "Pelanggan");
+            ws.value(0, 2, "Tanggal");
+            ws.value(0, 3, "Subtotal");
+            ws.value(0, 4, "Cash");
+            ws.value(0, 5, "Kembalian");
+
+            SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+            int r = 1;
+            for (Order o : lastShownList) {
+                ws.value(r, 0, o.getOrder_number());
+                ws.value(r, 1, o.getCustomer_name() != null ? o.getCustomer_name() : "Umum");
+                ws.value(r, 2, o.getCreated_at() != null ? dt.format(o.getCreated_at()) : "");
+                ws.value(r, 3, o.getSubtotal());
+                ws.value(r, 4, o.getCash());
+                ws.value(r, 5, o.getChange());
+                r++;
+            }
+            // Ringkasan di bawah data
+            int summaryRow = r + 1;
+            ws.value(summaryRow, 0, "Total Transaksi");
+            ws.value(summaryRow, 1, totalTx);
+            ws.value(summaryRow + 1, 0, "Total Pendapatan");
+            ws.value(summaryRow + 1, 1, totalRevenue);
+            wb.finish();
+            String totalFmt = String.format(Locale.getDefault(), "Rp %,.0f", totalRevenue);
+            Toast.makeText(getContext(), "Export berhasil. Total pendapatan: " + totalFmt, Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Gagal export XLSX", e);
+            Toast.makeText(getContext(), "Gagal export: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private OutputStream openDownloadOutputStream(String fileName, String mimeType) throws IOException {
+        if (getContext() == null) return null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, mimeType);
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            Uri uri = requireContext().getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) return null;
+            return requireContext().getContentResolver().openOutputStream(uri, "w");
+        } else {
+            File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            if (!downloads.exists() && !downloads.mkdirs()) {
+                return null;
+            }
+            File outFile = new File(downloads, fileName);
+            return new FileOutputStream(outFile);
+        }
+    }
+
     private void loadHistoryForRange(String isoStartInclusive, String isoEndExclusive) {
         String andClause = String.format(Locale.US,
                 "(created_at.gte.%s,created_at.lt.%s)", isoStartInclusive, isoEndExclusive);
@@ -313,6 +418,29 @@ public class HistoryFragment extends Fragment {
         selectedYear = ym / 12;
         selectedMonth = ym % 12;
         if (selectedMonth < 0) { selectedMonth += 12; selectedYear -= 1; }
+        updateMonthLabel();
+        loadHistoryForMonth(selectedYear, selectedMonth);
+    }
+
+    // Public method to refresh data when the tab becomes visible
+    public void refresh() {
+        // Re-load according to current selection (month or active filter)
+        if (chipGroupDateFilter != null && chipGroupDateFilter.getCheckedChipId() != View.NO_ID) {
+            int checkedId = chipGroupDateFilter.getCheckedChipId();
+            if (checkedId == R.id.chipToday) {
+                String[] range = getTodayStartEndIsoUtc();
+                loadHistoryForRange(range[0], range[1]);
+                return;
+            } else if (checkedId == R.id.chipThisWeek) {
+                String[] range = getThisWeekStartEndIsoUtc();
+                loadHistoryForRange(range[0], range[1]);
+                return;
+            } else if (checkedId == R.id.chipThisMonth) {
+                String[] range = getThisMonthStartEndIsoUtc();
+                loadHistoryForRange(range[0], range[1]);
+                return;
+            }
+        }
         updateMonthLabel();
         loadHistoryForMonth(selectedYear, selectedMonth);
     }
@@ -397,6 +525,7 @@ public class HistoryFragment extends Fragment {
                 if (num.contains(q) || cust.contains(q)) filtered.add(o);
             }
         }
+        lastShownList = new ArrayList<>(filtered);
         adapter.setItems(filtered);
         return filtered;
     }
