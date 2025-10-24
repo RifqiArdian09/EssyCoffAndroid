@@ -147,8 +147,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <include
-            layout="@layout/include_monthly_summary" />
+        
 
         <!-- Search -->
         <com.google.android.material.textfield.TextInputLayout

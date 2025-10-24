@@ -133,16 +133,7 @@ public class HistoryFragment extends Fragment {
             return view;
         }
 
-        // Bind month summary views
-        tvSelectedMonth = view.findViewById(R.id.tvSelectedMonth);
-        btnPrevMonth = view.findViewById(R.id.btnPrevMonth);
-        btnNextMonth = view.findViewById(R.id.btnNextMonth);
-        cardMonthlySummary = view.findViewById(R.id.cardMonthlySummary);
-        textTotalTransactions = view.findViewById(R.id.textTotalTransactions);
-        textTotalRevenue = view.findViewById(R.id.textTotalRevenue);
-        imageTopProduct = view.findViewById(R.id.imageTopProduct);
-        textTopProductName = view.findViewById(R.id.textTopProductName);
-        textTopProductQty = view.findViewById(R.id.textTopProductQty);
+
 
         // Bind search + quick filter views
         editTextSearch = view.findViewById(R.id.editTextSearch);
@@ -154,41 +145,14 @@ public class HistoryFragment extends Fragment {
         btnResetFilters = view.findViewById(R.id.btnResetFilters);
         btnExport = view.findViewById(R.id.btnExport);
 
-        Calendar cal = Calendar.getInstance();
-        selectedYear = cal.get(Calendar.YEAR);
-        selectedMonth = cal.get(Calendar.MONTH);
-        updateMonthLabel();
-
+        // Default load: this month range (monthly summary UI removed)
         Log.d(TAG, "Loading history for user UUID: " + userUuid);
-        loadHistoryForMonth(selectedYear, selectedMonth);
-
-        // Buttons: prev/next month
-        if (btnPrevMonth != null) btnPrevMonth.setOnClickListener(v -> changeMonth(-1));
-        if (btnNextMonth != null) btnNextMonth.setOnClickListener(v -> changeMonth(+1));
+        String[] defaultRange = getThisMonthStartEndIsoUtc();
+        loadHistoryForRange(defaultRange[0], defaultRange[1]);
 
         // Export XLSX langsung ke Downloads
         if (btnExport != null) btnExport.setOnClickListener(v -> exportXlsx());
-
-        // Swipe on card to navigate months
-        if (cardMonthlySummary != null) {
-            final GestureDetector detector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
-                private static final int SWIPE_THRESHOLD = 80;
-                private static final int SWIPE_VELOCITY_THRESHOLD = 80;
-                @Override
-                public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                    if (e1 == null || e2 == null) return false;
-                    float diffX = e2.getX() - e1.getX();
-                    if (Math.abs(diffX) > Math.abs(e2.getY() - e1.getY())) {
-                        if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                            if (diffX < 0) changeMonth(+1); else changeMonth(-1);
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            });
-            cardMonthlySummary.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
-        }
+        // Monthly swipe/prev/next removed with monthly summary UI
 
         // Search filter
         if (editTextSearch != null) {
@@ -206,9 +170,9 @@ public class HistoryFragment extends Fragment {
         if (chipGroupDateFilter != null) {
             chipGroupDateFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
                 if (checkedIds.isEmpty()) {
-                    // No chip selected, show monthly view
-                    updateMonthLabel();
-                    loadHistoryForMonth(selectedYear, selectedMonth);
+                    // No chip selected, default to this month
+                    String[] range = getThisMonthStartEndIsoUtc();
+                    loadHistoryForRange(range[0], range[1]);
                     return;
                 }
                 
@@ -229,8 +193,8 @@ public class HistoryFragment extends Fragment {
         if (btnResetFilters != null) btnResetFilters.setOnClickListener(v -> {
             if (editTextSearch != null) editTextSearch.setText("");
             if (chipGroupDateFilter != null) chipGroupDateFilter.clearCheck();
-            updateMonthLabel();
-            loadHistoryForMonth(selectedYear, selectedMonth);
+            String[] range = getThisMonthStartEndIsoUtc();
+            loadHistoryForRange(range[0], range[1]);
         });
 
         // Custom range via MaterialDatePicker
@@ -424,7 +388,7 @@ public class HistoryFragment extends Fragment {
 
     // Public method to refresh data when the tab becomes visible
     public void refresh() {
-        // Re-load according to current selection (month or active filter)
+        // Re-load according to current selection (active filter)
         if (chipGroupDateFilter != null && chipGroupDateFilter.getCheckedChipId() != View.NO_ID) {
             int checkedId = chipGroupDateFilter.getCheckedChipId();
             if (checkedId == R.id.chipToday) {
@@ -441,8 +405,8 @@ public class HistoryFragment extends Fragment {
                 return;
             }
         }
-        updateMonthLabel();
-        loadHistoryForMonth(selectedYear, selectedMonth);
+        String[] range = getThisMonthStartEndIsoUtc();
+        loadHistoryForRange(range[0], range[1]);
     }
 
     private String[] getMonthStartEndIsoUtc(int year, int monthZeroBased) {

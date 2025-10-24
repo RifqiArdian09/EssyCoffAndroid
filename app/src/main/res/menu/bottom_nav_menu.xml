@@ -1,5 +1,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@drawable/ic_home"
+        android:title="Dashboard" />
+    <item
         android:id="@+id/nav_transactions"
         android:icon="@drawable/ic_cart"
         android:title="Transaksi" />

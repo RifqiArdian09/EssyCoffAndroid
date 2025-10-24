@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.example.essycoff.R;
 import com.example.essycoff.auth.LoginActivity;
 import com.example.essycoff.utils.AuthManager;
+import com.example.essycoff.ui.DashboardFragment;
 import com.example.essycoff.ui.HistoryFragment;
 import com.example.essycoff.ui.ProductsFragment;
 import com.example.essycoff.ui.TransactionsFragment;
@@ -24,6 +25,7 @@ public class MainActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private BottomNavigationView bottomNav;
     // Keep single instances so we can refresh reliably
+    private DashboardFragment dashboardFragment = new DashboardFragment();
     private TransactionsFragment transactionsFragment = new TransactionsFragment();
     private ProductsFragment productsFragment = new ProductsFragment();
     private HistoryFragment historyFragment = new HistoryFragment();
@@ -38,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Setup ViewPager2 with adapter (inline)
         viewPager.setAdapter(new MainTabsAdapter());
-        viewPager.setOffscreenPageLimit(3);
+        viewPager.setOffscreenPageLimit(4);
 
         // Sync BottomNavigation -> ViewPager2
         bottomNav.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
@@ -58,12 +60,14 @@ public class MainActivity extends AppCompatActivity {
                             .show();
                     return false; // don't change the selected tab/page
                 }
-                if (item.getItemId() == R.id.nav_transactions) {
+                if (item.getItemId() == R.id.nav_dashboard) {
                     viewPager.setCurrentItem(0, true);
-                } else if (item.getItemId() == R.id.nav_products) {
+                } else if (item.getItemId() == R.id.nav_transactions) {
                     viewPager.setCurrentItem(1, true);
-                } else if (item.getItemId() == R.id.nav_history) {
+                } else if (item.getItemId() == R.id.nav_products) {
                     viewPager.setCurrentItem(2, true);
+                } else if (item.getItemId() == R.id.nav_history) {
+                    viewPager.setCurrentItem(3, true);
                 }
                 return true;
             }
@@ -76,14 +80,18 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageSelected(position);
                 switch (position) {
                     case 0:
+                        bottomNav.setSelectedItemId(R.id.nav_dashboard);
+                        if (dashboardFragment != null) dashboardFragment.refresh();
+                        break;
+                    case 1:
                         bottomNav.setSelectedItemId(R.id.nav_transactions);
                         if (transactionsFragment != null) transactionsFragment.refresh();
                         break;
-                    case 1:
+                    case 2:
                         bottomNav.setSelectedItemId(R.id.nav_products);
                         if (productsFragment != null) productsFragment.refresh();
                         break;
-                    case 2:
+                    case 3:
                         bottomNav.setSelectedItemId(R.id.nav_history);
                         if (historyFragment != null) historyFragment.refresh();
                         break;
@@ -91,9 +99,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Default page: Transaksi
+        // Default page: Dashboard
         viewPager.setCurrentItem(0, false);
-        bottomNav.setSelectedItemId(R.id.nav_transactions);
+        bottomNav.setSelectedItemId(R.id.nav_dashboard);
     }
 
     // Allow programmatic navigation without clicking bottom navigation
@@ -114,10 +122,12 @@ public class MainActivity extends AppCompatActivity {
         public Fragment createFragment(int position) {
             switch (position) {
                 case 0:
-                    return transactionsFragment;
+                    return dashboardFragment;
                 case 1:
-                    return productsFragment;
+                    return transactionsFragment;
                 case 2:
+                    return productsFragment;
+                case 3:
                 default:
                     return historyFragment;
             }
@@ -125,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return 3;
+            return 4;
         }
     }
 }
