@@ -1,4 +1,3 @@
-// TransactionAdapter.java
 package com.example.essycoff.adapter;
 
 import android.view.LayoutInflater;
@@ -22,13 +21,11 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     private List<Order> orderList;
     private OnHistoryClickListener listener;
 
-    // ✅ Interface untuk klik item dan hapus
     public interface OnHistoryClickListener {
         void onHistoryClick(Order order);
         void onDeleteClick(Order order, int position);
     }
 
-    // ✅ Konstruktor: terima listener
     public TransactionAdapter(List<Order> orderList, OnHistoryClickListener listener) {
         this.orderList = orderList;
         this.listener = listener;
@@ -49,18 +46,15 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         holder.textViewCustomerName.setText("Pelanggan: " + (order.getCustomer_name() != null ? order.getCustomer_name() : "Umum"));
         holder.textViewTotal.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", order.getSubtotal()));
 
-        // Format tanggal
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault());
         holder.textViewDate.setText(sdf.format(order.getCreated_at()));
 
-        // ✅ Tambahkan klik listener untuk detail
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onHistoryClick(order);
             }
         });
 
-        // ✅ Tambahkan klik listener untuk hapus
         holder.btnDelete.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onDeleteClick(order, position);
@@ -73,7 +67,6 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         return orderList.size();
     }
 
-    // ✅ Method untuk menghapus item dari list
     public void removeItem(int position) {
         if (position >= 0 && position < orderList.size()) {
             orderList.remove(position);
@@ -82,13 +75,11 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
         }
     }
 
-    // ✅ Ganti seluruh data adapter (mendukung filter & perubahan rentang tanggal)
     public void setItems(List<Order> newItems) {
         this.orderList = newItems;
         notifyDataSetChanged();
     }
 
-    // ✅ ViewHolder dengan tombol delete
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView textViewOrderNumber, textViewCustomerName, textViewTotal, textViewDate;
         ImageButton btnDelete;

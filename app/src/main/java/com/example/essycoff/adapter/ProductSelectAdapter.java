@@ -62,14 +62,12 @@ public class ProductSelectAdapter extends RecyclerView.Adapter<ProductSelectAdap
             holder.imageViewProduct.setImageResource(R.drawable.placeholder_product);
         }
 
-        // Hapus listener ganda
         holder.btnAddToCart.setOnClickListener(v -> {
             if (product.getStock() <= 0) {
                 Toast.makeText(context, "Stok " + product.getName() + " habis", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Cek apakah sudah ada di cart
             CartItem existingItem = ((TransactionsFragment) listener).findCartItemByProductId(product.getId());
             if (existingItem != null) {
                 if (existingItem.getQuantity() >= product.getStock()) {

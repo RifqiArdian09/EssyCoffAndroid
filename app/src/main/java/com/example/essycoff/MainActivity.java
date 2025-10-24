@@ -37,11 +37,9 @@ public class MainActivity extends AppCompatActivity {
         viewPager = findViewById(R.id.view_pager);
         bottomNav = findViewById(R.id.bottom_navigation);
 
-        // Setup ViewPager2 with adapter (inline)
         viewPager.setAdapter(new MainTabsAdapter());
         viewPager.setOffscreenPageLimit(4);
 
-        // Sync BottomNavigation -> ViewPager2
         bottomNav.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
@@ -57,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                                 startActivity(intent);
                             })
                             .show();
-                    return false; // don't change the selected tab/page
+                    return false;
                 }
                 if (item.getItemId() == R.id.nav_dashboard) {
                     viewPager.setCurrentItem(0, true);
@@ -72,7 +70,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Sync ViewPager2 -> BottomNavigation
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -98,19 +95,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Default page: Dashboard
         viewPager.setCurrentItem(0, false);
         bottomNav.setSelectedItemId(R.id.nav_dashboard);
     }
 
-    // Allow programmatic navigation without clicking bottom navigation
     public void setCurrentPage(int index) {
         if (viewPager != null) {
             viewPager.setCurrentItem(index, true);
         }
     }
 
-    // Inline pager adapter to avoid separate file
     private class MainTabsAdapter extends FragmentStateAdapter {
         MainTabsAdapter() {
             super(MainActivity.this);

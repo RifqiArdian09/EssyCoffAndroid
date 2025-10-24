@@ -57,7 +57,7 @@ public class TransactionsFragment extends Fragment implements
     private ApiService apiService;
     private String token;
     private double subtotal = 0;
-    private String userUuid; // ✅ ADD: Store user UUID
+    private String userUuid;
 
     @Nullable
     @Override
@@ -90,7 +90,6 @@ public class TransactionsFragment extends Fragment implements
         String rawToken = AuthManager.getInstance(requireContext()).getToken();
         token = "Bearer " + rawToken;
 
-        // ✅ FIX: Get UUID from AuthManager
         userUuid = AuthManager.getInstance(requireContext()).getUserId();
 
         Log.d(TAG, "User email: " + AuthManager.getInstance(requireContext()).getEmail());
@@ -131,7 +130,6 @@ public class TransactionsFragment extends Fragment implements
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     allProducts.clear();
-                    // Filter: only show active products (stock > 0 and not marked Nonaktif)
                     int total = response.body().size();
                     for (Product p : response.body()) {
                         String name = p.getName();
@@ -154,7 +152,6 @@ public class TransactionsFragment extends Fragment implements
         });
     }
 
-    // Public method to refresh data when the tab becomes visible
     public void refresh() {
         if (apiService != null) {
             loadProducts();
@@ -247,7 +244,7 @@ public class TransactionsFragment extends Fragment implements
 
         Log.d(TAG, "Order ID: " + orderId);
         Log.d(TAG, "Order Number: " + orderNumber);
-        Log.d(TAG, "User UUID: " + userUuid); // ✅ ADD: Log user UUID
+        Log.d(TAG, "User UUID: " + userUuid);
 
         Order order = new Order();
         order.setId(orderId);
@@ -256,7 +253,7 @@ public class TransactionsFragment extends Fragment implements
         order.setSubtotal(subtotal);
         order.setCash(cash);
         order.setChange(change);
-        order.setUser_id(userUuid); // ✅ FIX: Use proper UUID instead of random UUID
+        order.setUser_id(userUuid);
 
         btnSubmit.setEnabled(false);
         btnSubmit.setText("Memproses...");
@@ -336,7 +333,6 @@ public class TransactionsFragment extends Fragment implements
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder_id(orderId);
             orderItem.setProduct_id(cartItem.getProduct().getId());
-            // snapshot product name to preserve in history even if product gets deleted later
             String snapName = cartItem.getProduct().getName();
             if (snapName != null) {
                 snapName = snapName.replace(" (Nonaktif)", "").replace("(Nonaktif)", "").trim();
@@ -390,12 +386,10 @@ public class TransactionsFragment extends Fragment implements
         Log.d(TAG, "Transaction completed successfully");
         Toast.makeText(getContext(), "Transaksi berhasil disimpan!", Toast.LENGTH_LONG).show();
 
-        // ✅ Update stok di database
         updateProductStocks();
 
 
 
-        // ✅ Refresh daftar produk agar stok terbaru muncul
         loadProducts();
 
         resetForm();
@@ -403,7 +397,6 @@ public class TransactionsFragment extends Fragment implements
         btnSubmit.setText("Selesaikan Transaksi");
     }
 
-    // Di dalam TransactionsFragment.java
     private void updateProductStocks() {
         for (CartItem cartItem : cartItems) {
             Product product = cartItem.getProduct();
@@ -411,9 +404,8 @@ public class TransactionsFragment extends Fragment implements
             if (newStock < 0) newStock = 0;
             product.setStock(newStock);
 
-            // ✅ Perbaiki: gunakan "eq." + id di @Query
             Call<List<Product>> call = apiService.updateProductStock(
-                    "eq." + product.getId(),  // <-- Ini yang benar
+                    "eq." + product.getId(),
                     product,
                     Constants.SUPABASE_ANON_KEY,
                     token

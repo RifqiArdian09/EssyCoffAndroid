@@ -35,7 +35,6 @@ public class RetrofitClient {
         return retrofit;
     }
 
-    // Backward compatibility, without interceptors
     public static Retrofit getClient() {
         if (retrofit == null) {
             retrofit = new Retrofit.Builder()

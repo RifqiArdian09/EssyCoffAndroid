@@ -88,7 +88,6 @@ public class DashboardFragment extends Fragment {
         rvRecentTx.setAdapter(recentAdapter);
 
         chipGroup.setOnCheckedStateChangeListener((group, ids) -> reload());
-        // Default select: This Month
         chipThisMonth.setChecked(true);
 
         reload();
@@ -307,7 +306,6 @@ public class DashboardFragment extends Fragment {
         return new String[]{iso.format(startUtc.getTime()), iso.format(endUtc.getTime())};
     }
 
-    // Simple top product holder
     static class TopProduct {
         String name;
         int qty;
@@ -315,7 +313,6 @@ public class DashboardFragment extends Fragment {
         TopProduct(String n, int q, String imageUrl) { this.name = n; this.qty = q; this.imageUrl = imageUrl; }
     }
 
-    // Minimal adapter for top products list
     static class TopProductAdapter extends RecyclerView.Adapter<TopProductAdapter.VH> {
         private final List<TopProduct> items;
         TopProductAdapter(List<TopProduct> items) { this.items = items; }
@@ -329,7 +326,6 @@ public class DashboardFragment extends Fragment {
             h.tvQty.setText("Terjual: " + tp.qty);
             String initial = tp.name != null && tp.name.length() > 0 ? tp.name.substring(0,1).toUpperCase(Locale.getDefault()) : "?";
             h.tvAvatarInitial.setText(initial);
-            // Load product image if available, fallback to initial
             String fixedUrl = tp.imageUrl != null ? ImageUrlHelper.fixSupabaseUrl(tp.imageUrl) : null;
             if (fixedUrl != null && !fixedUrl.isEmpty()) {
                 h.tvAvatarInitial.setVisibility(View.GONE);
@@ -358,7 +354,6 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-    // Lightweight adapter for recent transactions list in Dashboard (compact UI)
     static class RecentTxAdapter extends RecyclerView.Adapter<RecentTxAdapter.VH> {
         private final List<Order> items;
         RecentTxAdapter(List<Order> items) { this.items = items; }

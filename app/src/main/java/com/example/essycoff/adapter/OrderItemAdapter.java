@@ -1,4 +1,3 @@
-// OrderItemAdapter.java
 package com.example.essycoff.adapter;
 
 import android.view.LayoutInflater;
@@ -18,7 +17,7 @@ import java.util.List;
 public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.ViewHolder> {
 
     private List<OrderItem> orderItems;
-    private List<Product> products; // Untuk dapatkan nama produk
+    private List<Product> products;
 
     public OrderItemAdapter(List<OrderItem> orderItems, List<Product> products) {
         this.orderItems = orderItems;
@@ -36,7 +35,6 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         OrderItem item = orderItems.get(position);
 
-        // Gunakan snapshot nama jika tersedia, jika tidak fallback cari dari daftar produk
         String productName = item.getProduct_name();
         if (productName == null || productName.isEmpty()) {
             productName = "Produk Tidak Dikenal";
@@ -47,7 +45,6 @@ public class OrderItemAdapter extends RecyclerView.Adapter<OrderItemAdapter.View
                 }
             }
         }
-        // Tampilkan nama tanpa status nonaktif
         if (productName != null) {
             productName = productName.replace(" (Nonaktif)", "").replace("(Nonaktif)", "").trim();
         }

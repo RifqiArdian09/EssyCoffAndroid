@@ -38,7 +38,6 @@ public class LoginActivity extends AppCompatActivity {
 
         authManager = AuthManager.getInstance(this);
 
-        // Auto login jika sudah ada token
         if (authManager.isLoggedIn()) {
             startActivity(new Intent(this, MainActivity.class));
             finish();

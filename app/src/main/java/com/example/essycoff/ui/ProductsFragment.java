@@ -60,10 +60,8 @@ public class ProductsFragment extends Fragment {
     private Uri selectedImageUri;
     private Bitmap selectedBitmap;
 
-    // Store dialog view reference to access ImageView
     private View currentDialogView;
 
-    // For edit functionality
     private Product currentEditingProduct;
     private boolean isEditMode = false;
 
@@ -92,7 +90,6 @@ public class ProductsFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        // Bind search input
         editTextProductSearch = view.findViewById(R.id.editTextProductSearch);
 
         apiService = RetrofitClient.getClient(requireContext()).create(ApiService.class);
@@ -105,10 +102,8 @@ public class ProductsFragment extends Fragment {
 
         loadProducts();
 
-        // FAB Tambah Produk
         view.findViewById(R.id.fabAddProduct).setOnClickListener(v -> showAddProductDialog());
 
-        // Search text change listener
         if (editTextProductSearch != null) {
             editTextProductSearch.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -122,21 +117,18 @@ public class ProductsFragment extends Fragment {
         return view;
     }
 
-    // ✅ Safe Toast method to prevent NullPointerException
     private void showSafeToast(String message) {
         if (getActivity() != null && isAdded() && !isRemoving()) {
             Toast.makeText(getActivity(), message, Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ✅ Safe Toast method for long messages
     private void showSafeLongToast(String message) {
         if (getActivity() != null && isAdded() && !isRemoving()) {
             Toast.makeText(getActivity(), message, Toast.LENGTH_LONG).show();
         }
     }
 
-    // Check if fragment is alive and attached
     private boolean isFragmentAlive() {
         return getActivity() != null && isAdded() && !isRemoving();
     }
@@ -181,7 +173,6 @@ public class ProductsFragment extends Fragment {
                 .setView(currentDialogView)
                 .create();
 
-        // Update dialog title
         if (currentDialogView.findViewById(R.id.dialogTitle) != null) {
             ((android.widget.TextView) currentDialogView.findViewById(R.id.dialogTitle)).setText(title);
         }
@@ -194,20 +185,16 @@ public class ProductsFragment extends Fragment {
         Button btnCancel = currentDialogView.findViewById(R.id.btnCancel);
         Button btnSave = currentDialogView.findViewById(R.id.btnSave);
 
-        // Set button text
         btnSave.setText(saveButtonText);
 
-        // Reset previous selections
         selectedBitmap = null;
         selectedImageUri = null;
 
-        // If editing, populate fields with existing data
         if (isEditMode && currentEditingProduct != null) {
             etName.setText(currentEditingProduct.getName());
             etPrice.setText(String.valueOf(currentEditingProduct.getPrice()));
             etStock.setText(String.valueOf(currentEditingProduct.getStock()));
 
-            // Load existing image
             if (currentEditingProduct.getImage_url() != null && !currentEditingProduct.getImage_url().isEmpty()) {
                 String imageUrl = ImageUrlHelper.fixSupabaseUrl(currentEditingProduct.getImage_url());
                 
@@ -230,7 +217,6 @@ public class ProductsFragment extends Fragment {
                 return;
             }
 
-            // For edit mode, image is optional (can keep existing image)
             if (!isEditMode && selectedBitmap == null) {
                 showSafeToast("Pilih gambar terlebih dahulu");
                 return;
@@ -258,26 +244,21 @@ public class ProductsFragment extends Fragment {
 
     private void updateProduct(String name, double price, int stock) {
         if (selectedBitmap != null) {
-            // If new image selected, upload it first
             uploadImageAndUpdateProduct(name, price, stock);
         } else {
-            // No new image, just update product data
             updateProductInDB(name, price, stock, currentEditingProduct.getImage_url());
         }
     }
 
     private void uploadImageAndUpdateProduct(String name, double price, int stock) {
-        // Convert Bitmap to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         selectedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos);
         byte[] imageBytes = baos.toByteArray();
 
-        // Generate unique filename
         String fileName = UUID.randomUUID().toString() + ".jpg";
 
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/jpeg"), imageBytes);
 
-        // Show loading
         showSafeToast("Mengupload gambar...");
 
         Call<ResponseBody> call = apiService.uploadFileToStorage(
@@ -317,7 +298,6 @@ public class ProductsFragment extends Fragment {
         });
     }
 
-    // Public method to refresh data when the tab becomes visible
     public void refresh() {
         if (apiService != null) {
             loadProducts();
@@ -339,7 +319,6 @@ public class ProductsFragment extends Fragment {
     }
 
     private void updateProductInDB(String name, double price, int stock, String imageUrl) {
-        // Clean the product name if it was deactivated (remove "(Nonaktif)" suffix)
         String cleanName = name;
         if (currentEditingProduct != null && currentEditingProduct.getName().contains("(Nonaktif)")) {
             cleanName = name.replace(" (Nonaktif)", "");
@@ -353,7 +332,6 @@ public class ProductsFragment extends Fragment {
 
         Log.d("ProductsFragment", "Updating product: " + cleanName + ", Price: " + price + ", Stock: " + stock);
 
-        // ✅ Fixed: Use query parameter with eq= for exact match
         Call<List<Product>> call = apiService.updateProduct(
                 "eq." + currentEditingProduct.getId(),
                 updatedProduct,
@@ -369,7 +347,6 @@ public class ProductsFragment extends Fragment {
                     loadProducts(); // Refresh
                     showSafeToast(stock > 0 ? "Produk berhasil diupdate" : "Produk berhasil dinonaktifkan");
 
-                    // Reset selections
                     selectedBitmap = null;
                     selectedImageUri = null;
                     currentEditingProduct = null;
@@ -422,7 +399,6 @@ public class ProductsFragment extends Fragment {
                     } catch (IOException e) {
                         Log.e("ProductsFragment", "Failed to read error body", e);
                     }
-                    // Jika gagal karena FK (produk masih direferensikan), fallback: nonaktifkan
                     if (response.code() == 409 && errorMsg != null && errorMsg.contains("violates foreign key constraint")) {
                         showSafeLongToast("Produk digunakan di transaksi. Mengubah menjadi Nonaktif agar tidak muncul di daftar.");
                         softDeactivateProduct(product);
@@ -440,7 +416,6 @@ public class ProductsFragment extends Fragment {
         });
     }
 
-    // Fallback: Nonaktifkan produk (soft delete) jika hard delete ditolak oleh FK
     private void softDeactivateProduct(Product product) {
         Product updatedProduct = new Product();
         updatedProduct.setStock(0);
@@ -512,17 +487,14 @@ public class ProductsFragment extends Fragment {
             return;
         }
 
-        // Convert Bitmap to byte array
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         selectedBitmap.compress(Bitmap.CompressFormat.JPEG, 85, baos);
         byte[] imageBytes = baos.toByteArray();
 
-        // Generate unique filename
         String fileName = UUID.randomUUID().toString() + ".jpg";
 
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/jpeg"), imageBytes);
 
-        // Show loading
         showSafeToast("Mengupload gambar...");
 
         Call<ResponseBody> call = apiService.uploadFileToStorage(
@@ -612,11 +584,9 @@ public class ProductsFragment extends Fragment {
             public void onResponse(Call<List<Product>> call, Response<List<Product>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     fullProductList.clear();
-                    // Only active products (stock > 0)
                     for (Product product : response.body()) {
                         if (product.getStock() > 0) fullProductList.add(product);
                     }
-                    // Apply current query if any
                     String q = editTextProductSearch != null && editTextProductSearch.getText() != null ? editTextProductSearch.getText().toString() : "";
                     applyProductFilter(q);
                     Log.d("ProductsFragment", "Loaded " + fullProductList.size() + " active products (filtered from " + response.body().size() + " total)");

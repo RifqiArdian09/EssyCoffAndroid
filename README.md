@@ -13,16 +13,6 @@ EssyCoff adalah aplikasi manajemen kedai kopi berbasis Android yang memungkinkan
 - **Export Data** - Export laporan ke Excel
 - **Real-time Updates** - Sinkronisasi data real-time
 
-## 🛠️ Tech Stack
-
-- **Android SDK** - Native Android development
-- **Java** - Primary programming language
-- **Supabase** - Backend as a Service (BaaS)
-- **Supabase Auth** - User authentication
-- **Supabase Storage** - File storage for images
-- **ViewPager2** - Smooth navigation between fragments
-- **RecyclerView** - Efficient list display
-- **Material Design** - Modern UI components
 
 ## 🗄️ Database Schema
 
@@ -127,7 +117,7 @@ CREATE TABLE public.order_items (
    - Dapatkan URL dan Anon Key dari Settings > API
 
 3. **Konfigurasi App**
-   - Buka file `app/src/main/java/com/example/essycoff/config/SupabaseConfig.java`
+   - Buka file `app/src/main/java/com/example/essycoff/utils/Constants.java`
    - Update URL dan API Key:
    ```java
    public static final String SUPABASE_URL = "YOUR_SUPABASE_URL";

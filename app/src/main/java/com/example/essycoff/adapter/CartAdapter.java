@@ -39,7 +39,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         return new ViewHolder(view);
     }
 
-    // CartAdapter.java
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         CartItem item = cartItems.get(position);
@@ -49,7 +48,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         holder.textViewCartItemPrice.setText("Rp " + String.format("%,.0f", product.getPrice()));
         holder.textViewQty.setText(String.valueOf(item.getQuantity()));
 
-        // ✅ Disable tombol + jika sudah maksimal
         if (item.getQuantity() >= product.getStock()) {
             holder.btnPlus.setEnabled(false);
             holder.btnPlus.setAlpha(0.5f);
@@ -58,7 +56,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             holder.btnPlus.setAlpha(1.0f);
         }
 
-        // Tombol kurang
         holder.btnMinus.setOnClickListener(v -> {
             int currentQty = item.getQuantity();
             if (currentQty > 1) {
@@ -68,7 +65,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                 if (listener != null) {
                     listener.onQuantityChanged(item, newQty);
                 }
-                // ✅ Enable tombol + kembali
                 holder.btnPlus.setEnabled(true);
                 holder.btnPlus.setAlpha(1.0f);
             } else {
@@ -78,7 +74,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
             }
         });
 
-        // Tombol tambah
         holder.btnPlus.setOnClickListener(v -> {
             int currentQty = item.getQuantity();
             if (currentQty < product.getStock()) {
@@ -88,7 +83,6 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
                 if (listener != null) {
                     listener.onQuantityChanged(item, newQty);
                 }
-                // ✅ Cek apakah sudah maksimal
                 if (newQty >= product.getStock()) {
                     holder.btnPlus.setEnabled(false);
                     holder.btnPlus.setAlpha(0.5f);

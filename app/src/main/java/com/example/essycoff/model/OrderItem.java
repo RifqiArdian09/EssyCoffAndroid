@@ -3,11 +3,10 @@ package com.example.essycoff.model;
 public class OrderItem {
     private String order_id;
     private String product_id;
-    private String product_name; // snapshot name to preserve history
+    private String product_name;
     private int qty;
     private double price;
 
-    // Getters and Setters
     public String getOrder_id() { return order_id; }
     public void setOrder_id(String order_id) { this.order_id = order_id; }
 

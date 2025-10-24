@@ -82,7 +82,6 @@ public class HistoryFragment extends Fragment {
     private ApiService apiService;
     private String token;
     private String userUuid;
-    // Month filter + summary views/state
     private TextView tvSelectedMonth;
     private ImageButton btnPrevMonth;
     private ImageButton btnNextMonth;
@@ -92,11 +91,9 @@ public class HistoryFragment extends Fragment {
     private ImageView imageTopProduct;
     private TextView textTopProductName;
     private TextView textTopProductQty;
-    // Selected month (0-based) and year
     private int selectedYear;
     private int selectedMonth;
 
-    // Search + quick filters
     private TextInputEditText editTextSearch;
     private ChipGroup chipGroupDateFilter;
     private Chip chipToday;
@@ -106,14 +103,12 @@ public class HistoryFragment extends Fragment {
     private MaterialButton btnResetFilters;
     private MaterialButton btnExport;
 
-    // No onCreate override needed for XLSX export
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_history, container, false);
 
-        // Recycler setup
         recyclerView = view.findViewById(R.id.recyclerViewHistory);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TransactionAdapter(orderList, new TransactionAdapter.OnHistoryClickListener() {
@@ -124,7 +119,6 @@ public class HistoryFragment extends Fragment {
         });
         recyclerView.setAdapter(adapter);
 
-        // Init API & auth
         apiService = RetrofitClient.getClient(requireContext()).create(ApiService.class);
         token = "Bearer " + AuthManager.getInstance(requireContext()).getToken();
         userUuid = AuthManager.getInstance(requireContext()).getUserId();
@@ -134,8 +128,6 @@ public class HistoryFragment extends Fragment {
         }
 
 
-
-        // Bind search + quick filter views
         editTextSearch = view.findViewById(R.id.editTextSearch);
         chipGroupDateFilter = view.findViewById(R.id.chipGroupDateFilter);
         chipToday = view.findViewById(R.id.chipToday);
@@ -145,16 +137,12 @@ public class HistoryFragment extends Fragment {
         btnResetFilters = view.findViewById(R.id.btnResetFilters);
         btnExport = view.findViewById(R.id.btnExport);
 
-        // Default load: this month range (monthly summary UI removed)
         Log.d(TAG, "Loading history for user UUID: " + userUuid);
         String[] defaultRange = getThisMonthStartEndIsoUtc();
         loadHistoryForRange(defaultRange[0], defaultRange[1]);
 
-        // Export XLSX langsung ke Downloads
         if (btnExport != null) btnExport.setOnClickListener(v -> exportXlsx());
-        // Monthly swipe/prev/next removed with monthly summary UI
 
-        // Search filter
         if (editTextSearch != null) {
             editTextSearch.addTextChangedListener(new TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -166,11 +154,9 @@ public class HistoryFragment extends Fragment {
             });
         }
 
-        // Quick date filters using ChipGroup
         if (chipGroupDateFilter != null) {
             chipGroupDateFilter.setOnCheckedStateChangeListener((group, checkedIds) -> {
                 if (checkedIds.isEmpty()) {
-                    // No chip selected, default to this month
                     String[] range = getThisMonthStartEndIsoUtc();
                     loadHistoryForRange(range[0], range[1]);
                     return;
@@ -197,7 +183,6 @@ public class HistoryFragment extends Fragment {
             loadHistoryForRange(range[0], range[1]);
         });
 
-        // Custom range via MaterialDatePicker
         View btnCustom = view.findViewById(R.id.btnFilterCustomRange);
         if (btnCustom != null) {
             btnCustom.setOnClickListener(v -> {
@@ -206,7 +191,6 @@ public class HistoryFragment extends Fragment {
                         .build();
                 picker.addOnPositiveButtonClickListener(selection -> {
                     if (selection != null && selection.first != null && selection.second != null) {
-                        // Inclusive end -> make exclusive by adding 1 day
                         String[] range = getIsoUtcFromMillis(selection.first, selection.second + 24L*60*60*1000);
                         loadHistoryForRange(range[0], range[1]);
                     }
@@ -253,7 +237,6 @@ public class HistoryFragment extends Fragment {
         });
     }
 
-    // XLSX export helpers
     private void exportXlsx() {
         if (lastShownList == null || lastShownList.isEmpty()) {
             Toast.makeText(getContext(), "Tidak ada data untuk diexport", Toast.LENGTH_SHORT).show();
@@ -269,7 +252,6 @@ public class HistoryFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd-HHmm", Locale.getDefault());
         String fileName = "riwayat-" + sdf.format(Calendar.getInstance().getTime()) + ".xlsx";
         String mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        // Hitung ringkasan
         int totalTx = lastShownList.size();
         double totalRevenue = 0;
         for (Order o : lastShownList) totalRevenue += o.getSubtotal();
@@ -386,7 +368,6 @@ public class HistoryFragment extends Fragment {
         loadHistoryForMonth(selectedYear, selectedMonth);
     }
 
-    // Public method to refresh data when the tab becomes visible
     public void refresh() {
         // Re-load according to current selection (active filter)
         if (chipGroupDateFilter != null && chipGroupDateFilter.getCheckedChipId() != View.NO_ID) {
@@ -495,14 +476,12 @@ public class HistoryFragment extends Fragment {
     }
 
     private void updateSummary(List<Order> orders) {
-        // Total transactions & revenue for selected month
         int totalTx = orders.size();
         double totalRevenue = 0;
         for (Order o : orders) totalRevenue += o.getSubtotal();
         if (textTotalTransactions != null) textTotalTransactions.setText(String.valueOf(totalTx));
         if (textTotalRevenue != null) textTotalRevenue.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", totalRevenue));
 
-        // Update top product card
         updateTopProduct(orders);
     }
 
@@ -646,7 +625,6 @@ public class HistoryFragment extends Fragment {
         });
     }
 
-    // ✅ 2. Dialog konfirmasi hapus transaksi
     private void showDeleteConfirmDialog(Order order, int position) {
         new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setTitle("Hapus Transaksi")
@@ -658,9 +636,7 @@ public class HistoryFragment extends Fragment {
                 .show();
     }
 
-    // ✅ 3. Hapus transaksi dari database
     private void deleteTransaction(Order order, int position) {
-        // Pertama hapus order items
         Call<ResponseBody> callItems = apiService.deleteOrderItems(
                 Constants.SUPABASE_ANON_KEY,
                 token,
@@ -671,7 +647,6 @@ public class HistoryFragment extends Fragment {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    // Kemudian hapus order
                     Call<ResponseBody> callOrder = apiService.deleteOrder(
                             Constants.SUPABASE_ANON_KEY,
                             token,
@@ -706,14 +681,12 @@ public class HistoryFragment extends Fragment {
         });
     }
 
-    // ✅ 4. Tampilkan dialog detail transaksi dengan info lengkap
     private void showOrderDetailDialog(Order order) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_order_detail, null);
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                 .setView(dialogView)
                 .create();
 
-        // Bind header
         TextView tvOrderNumber = dialogView.findViewById(R.id.textViewOrderNumberDetail);
         TextView tvCustomerName = dialogView.findViewById(R.id.textViewCustomerNameDetail);
         TextView tvDate = dialogView.findViewById(R.id.textViewDateDetail);
@@ -730,20 +703,17 @@ public class HistoryFragment extends Fragment {
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault());
         tvDate.setText("Tanggal: " + sdf.format(order.getCreated_at()));
 
-        // Format currency
         tvSubtotal.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", order.getSubtotal()));
         tvCash.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", order.getCash()));
         tvChange.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", order.getChange()));
         tvTotal.setText("Rp " + String.format(Locale.getDefault(), "%,.0f", order.getSubtotal()));
 
-        // Muat item
         loadOrderItems(order.getId(), recyclerViewItems);
 
         btnClose.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
-    // ✅ 5. Muat item produk dari order_items
     private void loadOrderItems(String orderId, RecyclerView recyclerView) {
         Call<List<OrderItem>> callItems = apiService.getOrderItems(
                 Constants.SUPABASE_ANON_KEY,
@@ -757,7 +727,6 @@ public class HistoryFragment extends Fragment {
                 if (response.isSuccessful() && response.body() != null) {
                     List<OrderItem> items = response.body();
 
-                    // Ambil semua produk untuk nama
                     Call<List<Product>> callProducts = apiService.getProducts(Constants.SUPABASE_ANON_KEY, token);
                     callProducts.enqueue(new Callback<List<Product>>() {
                         @Override

@@ -35,7 +35,6 @@ public class AuthManager {
     public void saveEmail(String email) {
         prefs.edit().putString(Constants.KEY_EMAIL, email).apply();
 
-        // ADD: Generate and save UUID when email is saved
         if (email != null && !email.isEmpty()) {
             String userUuid = UUID.nameUUIDFromBytes(email.getBytes()).toString();
             saveUserUuid(userUuid);
@@ -55,7 +54,6 @@ public class AuthManager {
         return prefs.getString(Constants.KEY_EMAIL, null);
     }
 
-    // ADD: Methods to handle user UUID
     public void saveUserUuid(String userUuid) {
         prefs.edit().putString(Constants.KEY_USER_UUID, userUuid).apply();
     }

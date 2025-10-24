@@ -51,7 +51,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         holder.textViewPrice.setText("Rp " + String.format("%,.0f", product.getPrice()));
         holder.textViewStock.setText("Stok: " + product.getStock());
 
-        // Load product image with enhanced error handling
         String imageUrl = ImageUrlHelper.fixSupabaseUrl(product.getImage_url());
         
         if (imageUrl != null && !imageUrl.isEmpty()) {
@@ -67,22 +66,20 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
                             if (e != null) {
                                 e.logRootCauses("ProductAdapter");
                             }
-                            return false; // Let Glide handle the error drawable
+                            return false;
                         }
 
                         @Override
                         public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
                             android.util.Log.d("ProductAdapter", "Successfully loaded image: " + imageUrl);
-                            return false; // Let Glide handle the resource
+                            return false;
                         }
                     })
                     .into(holder.imageViewProduct);
         } else {
-            // No image URL provided, show placeholder
             holder.imageViewProduct.setImageResource(R.drawable.placeholder_product);
         }
 
-        // Set click listeners
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onItemClick(product);
@@ -107,7 +104,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         return productList.size();
     }
 
-    // Allow replacing data when filtering
     public void setItems(List<Product> newItems) {
         this.productList = newItems;
         notifyDataSetChanged();

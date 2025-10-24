@@ -22,17 +22,14 @@ import retrofit2.http.Query;
 
 public interface ApiService {
 
-    // 🔐 Auth: Login
     @Headers("Content-Type: application/json")
     @POST("auth/v1/token?grant_type=password")
     Call<LoginResponse> login(@Body LoginRequest body, @Header("apikey") String apiKey);
 
-    // 🔐 Auth: Refresh Token
     @Headers("Content-Type: application/json")
     @POST("auth/v1/token?grant_type=refresh_token")
     Call<LoginResponse> refresh(@Body RefreshRequest body, @Header("apikey") String apiKey);
 
-    // 🛒 Products - CRUD operations
     @GET("rest/v1/products")
     Call<List<Product>> getProducts(
             @Header("apikey") String apiKey,
@@ -82,7 +79,6 @@ public interface ApiService {
             @Body RequestBody file
     );
 
-    // 💵 Transaksi: Orders
     @Headers({"Content-Type: application/json", "Prefer: return=representation"})
     @POST("rest/v1/orders")
     Call<List<Order>> createOrder(
@@ -91,7 +87,6 @@ public interface ApiService {
             @Header("Authorization") String auth
     );
 
-    // ✅ FIX: Tetap menggunakan List<OrderItem> karena memang insert multiple items
     @Headers({"Content-Type: application/json", "Prefer: return=representation"})
     @POST("rest/v1/order_items")
     Call<List<OrderItem>> insertOrderItems(
@@ -112,7 +107,6 @@ public interface ApiService {
             @Header("Authorization") String auth
     );
 
-    // 📜 Riwayat
     @GET("rest/v1/orders")
     Call<List<Order>> getOrders(
             @Header("apikey") String apiKey,
@@ -121,7 +115,6 @@ public interface ApiService {
             @Query("order") String order
     );
 
-    // 📜 Riwayat dengan filter tambahan menggunakan PostgREST and-clause
     @GET("rest/v1/orders")
     Call<List<Order>> getOrders(
             @Header("apikey") String apiKey,
@@ -131,38 +124,35 @@ public interface ApiService {
             @Query("and") String andClause
     );
 
-    // ApiService.java
     @GET("rest/v1/order_items")
     Call<List<OrderItem>> getOrderItems(
             @Header("apikey") String apiKey,
             @Header("Authorization") String auth,
-            @Query("order_id") String order_id  // eq.orderId
+            @Query("order_id") String order_id
     );
 
-    // Bulk fetch order items by multiple order IDs using PostgREST IN filter
     @GET("rest/v1/order_items")
     Call<List<OrderItem>> getOrderItemsByOrderIds(
             @Header("apikey") String apiKey,
             @Header("Authorization") String auth,
-            @Query("order_id") String inOrderIds // in.(id1,id2,...)
+            @Query("order_id") String inOrderIds
     );
 
     @DELETE("rest/v1/order_items")
     Call<ResponseBody> deleteOrderItems(
             @Header("apikey") String apiKey,
             @Header("Authorization") String auth,
-            @Query("order_id") String orderId  // eq.orderId
+            @Query("order_id") String orderId
     );
 
     @DELETE("rest/v1/orders")
     Call<ResponseBody> deleteOrder(
             @Header("apikey") String apiKey,
             @Header("Authorization") String auth,
-            @Query("id") String orderId  // eq.orderId
+            @Query("id") String orderId
     );
 
 
-    // Login Request Class
     class LoginRequest {
         public String email;
         public String password;
@@ -173,7 +163,6 @@ public interface ApiService {
         }
     }
 
-    // Refresh Request Class
     class RefreshRequest {
         public String refresh_token;
 
