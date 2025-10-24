@@ -24,7 +24,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 public class MainActivity extends AppCompatActivity {
     private ViewPager2 viewPager;
     private BottomNavigationView bottomNav;
-    // Keep single instances so we can refresh reliably
     private DashboardFragment dashboardFragment = new DashboardFragment();
     private TransactionsFragment transactionsFragment = new TransactionsFragment();
     private ProductsFragment productsFragment = new ProductsFragment();
